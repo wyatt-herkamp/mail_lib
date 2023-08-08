@@ -1,6 +1,7 @@
 use bytes::Bytes;
 use std::fmt::Write;
 use std::str::FromStr;
+use auto_impl::auto_impl;
 use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum StatementWriteError {
@@ -9,6 +10,7 @@ pub enum StatementWriteError {
     #[error("Failed to write statement: {0}")]
     UTF8Error(#[from] std::str::Utf8Error),
 }
+#[auto_impl(&mut, Box)]
 pub trait StatementWriter {
     fn write_str(&mut self, str: &str) -> Result<(), StatementWriteError>;
 
@@ -42,6 +44,7 @@ impl StatementWriter for String {
         Ok(())
     }
 }
+#[auto_impl(&,&mut, Box, Arc)]
 pub trait Statement: FromStr<Err = StatementParseError> {
     // TODO Maybe Add fn to_bytes(&self) -> &[u8];
 
@@ -54,7 +57,7 @@ pub trait MultiLineStatement: Statement + Send + 'static {
     where
         Self: Sized;
 }
-
+#[auto_impl(&,&mut, Box, Arc)]
 pub trait SingleLineStatement: Statement + Send + 'static {
     fn to_hyphenated_line(&self) -> String;
 
@@ -71,7 +74,7 @@ pub trait SingleLineStatement: Statement + Send + 'static {
 #[cfg(feature = "async")]
 pub mod async_statement {
     use crate::error::SMTPError;
-    use crate::smtp_client::AsyncSMTPClient;
+    use crate::smtp_client::async_traits::AsyncSMTPClient;
     use crate::smtp_server::async_traits::AsyncSMTPConnection;
     use crate::statement::{MultiLineStatement, Statement};
 

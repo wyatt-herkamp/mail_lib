@@ -3,6 +3,7 @@ use common::credentials::LoginMechanism;
 use enum_helper::EnumOfKeys;
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
+use auto_impl::auto_impl;
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -89,7 +90,8 @@ impl TryFrom<String> for SMTPServerExtension {
         }
     }
 }
-///
+
+#[auto_impl(&,&mut, Box, Arc)]
 pub trait SMTPServer: Debug {
     fn get_hostname(&self) -> &str;
 
@@ -99,15 +101,13 @@ pub trait SMTPServer: Debug {
 
     fn supported_extensions(&self) -> &Vec<SMTPServerExtension>;
 }
-
+#[auto_impl(&,&mut, Box, Arc)]
 pub trait SMTPConnection: Debug {
     type Server: SMTPServer;
 
     fn get_server(&self) -> &Self::Server;
 
     fn get_state(&self) -> &SMTPConnectionState;
-
-    fn set_state(&mut self, state: SMTPConnectionState);
 
     fn get_end_of_multiline_command(&self) -> &str;
 }
@@ -118,11 +118,13 @@ pub mod async_traits {
     use crate::statement::Statement;
     use bytes::Bytes;
     use std::future::Future;
+    use auto_impl::auto_impl;
 
     /// An async version of SMTPConnection
     ///
     /// ### Notes
     /// The Future Types will be dropped when Rust 1.74 goes into beta https://blog.rust-lang.org/inside-rust/2023/05/03/stabilizing-async-fn-in-trait.html#timeline-and-roadmap
+    #[auto_impl(&mut, Box)]
     pub trait AsyncSMTPConnection<'a>: SMTPConnection + Send {
         type ReadLineFuture: Future<Output = Result<String, SMTPError>> + Send + 'a;
         type WriteFuture: Future<Output = Result<(), SMTPError>> + Send + 'a;

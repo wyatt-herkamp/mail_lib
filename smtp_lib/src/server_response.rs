@@ -1,7 +1,4 @@
-use crate::statement::{
-    MultiLineStatement, SingleLineStatement, Statement, StatementParseError, StatementWriteError,
-    StatementWriter,
-};
+use crate::statement::{MultiLineStatement, SingleLineStatement, Statement, StatementParseError, StatementWriteError, StatementWriter};
 use bytes::{BufMut, Bytes, BytesMut};
 use std::fmt::{Display, Formatter, Write};
 use std::str::FromStr;

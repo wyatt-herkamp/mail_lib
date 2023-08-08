@@ -100,11 +100,11 @@ mod async_impl {
     use super::{EhloCommand, EhloCommandData, EhloResponse};
 
     use crate::server_response::{MultilineServerResponse, ResponseCode, ServerResponseLine};
-    use crate::smtp_client::AsyncSMTPClient;
     use crate::smtp_server::async_traits::AsyncSMTPConnection;
     use crate::statement::async_statement::AsyncMultilineStatement;
     use crate::CRLF;
     use futures::future::{ready, BoxFuture, Ready};
+    use crate::smtp_client::async_traits::AsyncSMTPClient;
 
     impl<'a> AsyncSMTPCommand<'a> for EhloCommand {
         type ServerHandleRead = Ready<crate::Result<Self::ClientCommand>>;
