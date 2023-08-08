@@ -9,7 +9,7 @@ pub use smtp_lib::{
 #[cfg(feature = "async")]
 pub use smtp_lib::{
     smtp_server::async_traits::*,
-    smtp_client::AsyncSMTPClient,
+    smtp_client::async_traits::*,
     commands::async_traits::*,
 };
 pub use common::{
