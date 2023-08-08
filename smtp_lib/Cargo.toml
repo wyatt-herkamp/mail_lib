@@ -1,0 +1,23 @@
+[package]
+name = "smtp_lib"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+common = {path = "../common"}
+thiserror = {workspace = true}
+futures = {workspace = true}
+regex = {workspace = true}
+bytes = {workspace = true}
+async-trait = {workspace = true}
+strum = {workspace = true}
+enum_helper = {workspace = true}
+[dev-dependencies]
+tokio = {workspace = true}
+anyhow = {workspace = true}
+
+[features]
+default=["async"]
+async=[]

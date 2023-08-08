@@ -1,0 +1,21 @@
+[workspace]
+members=[
+"mail_lib_macros",
+    "common",
+    "mail_build",
+    "smtp_lib",
+"mail_lib"]
+[workspace.dependencies]
+thiserror = "1"
+tokio = {version ="1", features = ["full"]}
+async-trait = "0.1"
+futures = { version = "0.3"}
+regex = "1"
+serde = { version = "1", features = ["derive"]}
+impl-tools = "0.9"
+anyhow = "1"
+bytes = "1"
+strum = { version = "0.25",features = ["derive"] }
+base64 = {version = "0.21"}
+rkyv = {version = "0.7",features = [ "validation"]}
+enum_helper = { git = "https://github.com/wyatt-herkamp/enum_helper.git", features = ["derive"]}
