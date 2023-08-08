@@ -3,6 +3,7 @@ use common::credentials::LoginMechanism;
 use enum_helper::EnumOfKeys;
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
+use std::usize;
 use auto_impl::auto_impl;
 use thiserror::Error;
 
@@ -28,7 +29,7 @@ pub enum ServerExtensionParseError {
 ))]
 #[enum_attr(strum(serialize_all = "UPPERCASE"))]
 pub enum SMTPServerExtension {
-    Size(u64),
+    Size(usize),
     StartTLS,
     Auth(Vec<LoginMechanism>),
     #[enum_of_keys(default=name)]
@@ -69,7 +70,7 @@ impl TryFrom<String> for SMTPServerExtension {
             .ok_or(ServerExtensionParseError::InvalidSize(value.clone()))?
         {
             "SIZE" => {
-                let size = u64::from_str(
+                let size = usize::from_str(
                     split
                         .next()
                         .ok_or(ServerExtensionParseError::InvalidSize(value.clone()))?,
