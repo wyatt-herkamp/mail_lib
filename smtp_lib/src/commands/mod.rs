@@ -1,4 +1,4 @@
-pub mod ehlo;
+pub mod command_impls;
 
 pub trait SMTPCommand: Sized {
     /// What type of data a Server would get from a Client

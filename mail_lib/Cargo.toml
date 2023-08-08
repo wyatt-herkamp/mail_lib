@@ -7,4 +7,10 @@ edition = "2021"
 
 [dependencies]
 thiserror = {workspace=true}
+common = {path ="../common"}
+mail_build = {path ="../mail_build"}
 smtp_lib = {path ="../smtp_lib"}
+
+[features]
+full= []
+async = ["smtp_lib/async"]

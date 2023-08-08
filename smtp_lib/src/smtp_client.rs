@@ -7,7 +7,7 @@ pub trait SMTPClient {
 }
 /// ### Notes
 /// The Future Types will be dropped when Rust 1.74 goes into beta https://blog.rust-lang.org/inside-rust/2023/05/03/stabilizing-async-fn-in-trait.html#timeline-and-roadmap
-
+#[cfg(feature = "async")]
 pub trait AsyncSMTPClient<'a>: SMTPClient + Send {
     type ReadLineFuture: Future<Output = crate::Result<String>> + 'a + Send;
     type WriteFuture: Future<Output = crate::Result<()>> + 'a + Send;

@@ -94,9 +94,10 @@ impl SMTPCommand for EhloCommand {
     }
 }
 
+#[cfg(feature = "async")]
 mod async_impl {
     use crate::commands::async_traits::AsyncSMTPCommand;
-    use crate::commands::ehlo::{EhloCommand, EhloCommandData, EhloResponse};
+    use super::{EhloCommand, EhloCommandData, EhloResponse};
 
     use crate::server_response::{MultilineServerResponse, ResponseCode, ServerResponseLine};
     use crate::smtp_client::AsyncSMTPClient;
