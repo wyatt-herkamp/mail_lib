@@ -1,0 +1,34 @@
+[package]
+name = "mail_lib_types"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { workspace = true, optional = true }
+impl-tools = { workspace = true }
+thiserror = { workspace = true }
+zeroize = { version = "1", features = ["derive"], optional = true }
+strum = { workspace = true }
+base64 = { workspace = true }
+rkyv = { workspace = true, optional = true }
+enum_helper = { workspace = true }
+chumsky = { version = "1.0.0-alpha.6", default-features = false, features = [
+    "std",
+] }
+tracing = { workspace = true, optional = true }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+chumsky = { version = "1.0.0-alpha.6", features = ["std", "spill-stack"] }
+[dev-dependencies]
+serde = { version = "1" }
+serde_json = { version = "1" }
+pretty_assertions = { version = "1" }
+criterion = { version = "0.5", features = ["html_reports"] }
+[features]
+default = ["serde", "zeroize", "rkyv"]
+
+
+[[bench]]
+name = "email_address"
+harness = false

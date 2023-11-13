@@ -1,0 +1,8 @@
+[
+    {
+        "mailbox": "Example<example@example.com>",
+        "name": "Example",
+        "local": "example",
+        "domain": "example.com"
+    }
+]

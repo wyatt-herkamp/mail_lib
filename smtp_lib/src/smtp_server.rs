@@ -1,11 +1,15 @@
-use crate::SMTPConnectionState;
-use common::credentials::LoginMechanism;
-use enum_helper::EnumOfKeys;
-use std::fmt::{Debug, Display};
-use std::str::FromStr;
-use std::usize;
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+    usize,
+};
+
 use auto_impl::auto_impl;
+use enum_helper::EnumOfKeys;
+use mail_lib_types::credentials::LoginMechanism;
 use thiserror::Error;
+
+use crate::SMTPConnectionState;
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum ServerExtensionParseError {
@@ -34,10 +38,10 @@ pub enum SMTPServerExtension {
     Auth(Vec<LoginMechanism>),
     #[enum_of_keys(default=name)]
     #[enum_attr(strum(default))]
-    Other{
+    Other {
         name: String,
         value: Option<String>,
-    }
+    },
 }
 impl Display for SMTPServerExtension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -47,10 +51,7 @@ impl Display for SMTPServerExtension {
             SMTPServerExtension::Auth(value) => {
                 write!(f, "AUTH {}", LoginMechanism::format_iter(value.iter()))
             }
-            SMTPServerExtension::Other{
-                name,
-                value,
-            } =>{
+            SMTPServerExtension::Other { name, value } => {
                 if let Some(value) = value {
                     write!(f, "{} {}", name, value)
                 } else {
@@ -83,7 +84,7 @@ impl TryFrom<String> for SMTPServerExtension {
             other_key => {
                 let other_key = other_key.to_string();
                 let other_data = value.splitn(2, " ").nth(1).map(|s| s.to_string());
-                Ok(Self::Other{
+                Ok(Self::Other {
                     name: other_key,
                     value: other_data,
                 })
@@ -114,12 +115,12 @@ pub trait SMTPConnection: Debug {
 }
 
 pub mod async_traits {
-    use crate::error::SMTPError;
-    use crate::smtp_server::SMTPConnection;
-    use crate::statement::Statement;
-    use bytes::Bytes;
     use std::future::Future;
+
     use auto_impl::auto_impl;
+    use bytes::Bytes;
+
+    use crate::{error::SMTPError, smtp_server::SMTPConnection, statement::Statement};
 
     /// An async version of SMTPConnection
     ///

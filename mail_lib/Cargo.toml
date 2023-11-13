@@ -6,11 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thiserror = {workspace=true}
-common = {path ="../common"}
-mail_build = {path ="../mail_build"}
-smtp_lib = {path ="../smtp_lib"}
+thiserror = { workspace = true }
+mail_lib_types = { path = "../mail_lib_types" }
+mail_build = { path = "../mail_build" }
+smtp_lib = { path = "../smtp_lib" }
 
 [features]
-full= []
+full = []
 async = ["smtp_lib/async"]

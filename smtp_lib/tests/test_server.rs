@@ -1,8 +1,12 @@
-use bytes::Bytes;
-use smtp_lib::smtp_server::async_traits::AsyncSMTPConnection;
-use smtp_lib::smtp_server::{SMTPConnection, SMTPServer};
-use smtp_lib::SMTPConnectionState;
 use std::sync::Arc;
+
+use bytes::Bytes;
+use smtp_lib::{
+    smtp_server::{
+        async_traits::AsyncSMTPConnection, SMTPConnection, SMTPServer, SMTPServerExtension,
+    },
+    SMTPConnectionState,
+};
 use tokio::net::{TcpListener, TcpStream};
 
 #[derive(Debug)]
@@ -20,6 +24,10 @@ impl SMTPServer for TestSMTPServer {
     fn get_greeting(&self) -> Option<&str> {
         None
     }
+
+    fn supported_extensions(&self) -> &Vec<SMTPServerExtension> {
+        todo!()
+    }
 }
 #[derive(Debug)]
 pub struct TestSMTPConnection {
@@ -34,10 +42,6 @@ impl SMTPConnection for TestSMTPConnection {
     }
 
     fn get_state(&self) -> &SMTPConnectionState {
-        todo!()
-    }
-
-    fn set_state(&mut self, state: SMTPConnectionState) {
         todo!()
     }
 

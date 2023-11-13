@@ -6,19 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-common = {path = "../common"}
-thiserror = {workspace = true}
-futures = {workspace = true}
-regex = {workspace = true}
-bytes = {workspace = true}
-async-trait = {workspace = true}
-strum = {workspace = true}
-enum_helper = {workspace = true}
-auto_impl = {workspace = true}
+mail_lib_types = { path = "../mail_lib_types" }
+thiserror = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+bytes = { workspace = true }
+async-trait = { workspace = true }
+strum = { workspace = true }
+enum_helper = { workspace = true }
+auto_impl = { workspace = true }
 [dev-dependencies]
-tokio = {workspace = true}
-anyhow = {workspace = true}
+tokio = { workspace = true }
+anyhow = { workspace = true }
 
 [features]
-default=["async"]
-async=[]
+default = ["async"]
+async = []

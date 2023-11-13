@@ -1,7 +1,7 @@
-use bytes::Bytes;
-use std::fmt::Write;
-use std::str::FromStr;
+use std::{fmt::Write, str::FromStr};
+
 use auto_impl::auto_impl;
+use bytes::Bytes;
 use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum StatementWriteError {
@@ -73,10 +73,12 @@ pub trait SingleLineStatement: Statement + Send + 'static {
 
 #[cfg(feature = "async")]
 pub mod async_statement {
-    use crate::error::SMTPError;
-    use crate::smtp_client::async_traits::AsyncSMTPClient;
-    use crate::smtp_server::async_traits::AsyncSMTPConnection;
-    use crate::statement::{MultiLineStatement, Statement};
+    use crate::{
+        error::SMTPError,
+        smtp_client::async_traits::AsyncSMTPClient,
+        smtp_server::async_traits::AsyncSMTPConnection,
+        statement::{MultiLineStatement, Statement},
+    };
 
     /// This Trait is automatically implemented for everything that implements `Statement`
     ///

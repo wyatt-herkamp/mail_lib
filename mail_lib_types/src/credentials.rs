@@ -59,12 +59,14 @@ impl LoginMechanism {
             .collect()
     }
     /// Formats a list of AuthMethods into a string by [RFC 4954](https://datatracker.ietf.org/doc/html/rfc4954#section-3)
-    pub fn format_iter<'a>(iter: impl Iterator<Item = &'a LoginMechanism> + ExactSizeIterator) -> String {
+    pub fn format_iter<'a>(
+        iter: impl Iterator<Item = &'a LoginMechanism> + ExactSizeIterator,
+    ) -> String {
         let size = iter.len();
         let mut string = String::with_capacity(size * 5);
         for (index, value) in iter.enumerate() {
             string.push_str(value.as_ref());
-            if index != size- 1 {
+            if index != size - 1 {
                 string.push(' ');
             }
         }

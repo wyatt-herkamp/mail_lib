@@ -1,11 +1,15 @@
-use bytes::BytesMut;
-use smtp_lib::commands::async_traits::AsyncSMTPCommand;
-use smtp_lib::{BoxSendFuture, END_OF_MULTILINE_COMMAND};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
-use smtp_lib::commands::command_impls::{EhloCommand, EhloCommandData};
-use smtp_lib::smtp_client::async_traits::AsyncSMTPClient;
-use smtp_lib::smtp_client::SMTPClient;
+use smtp_lib::{
+    commands::{
+        async_traits::AsyncSMTPCommand,
+        command_impls::{EhloCommand, EhloCommandData},
+    },
+    smtp_client::{async_traits::AsyncSMTPClient, SMTPClient},
+    BoxSendFuture, END_OF_MULTILINE_COMMAND,
+};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+};
 
 #[derive(Debug)]
 pub struct TestClient {

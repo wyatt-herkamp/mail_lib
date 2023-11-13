@@ -1,20 +1,16 @@
-pub use smtp_lib::{
-    Result as SMTPResult,
-    smtp_client::*,
-    smtp_server::*,
-    commands::*,
-    commands::command_impls::*,
-};
-
+pub use mail_lib_types::{credentials::*, email_address::*};
 #[cfg(feature = "async")]
 pub use smtp_lib::{
-    smtp_server::async_traits::*,
-    smtp_client::async_traits::*,
-    commands::async_traits::*,
+    commands::async_traits::*, smtp_client::async_traits::*, smtp_server::async_traits::*,
 };
-pub use common::{
-    credentials::*,
-    email_address::*
+pub use smtp_lib::{
+    commands::{command_impls::*, *},
+    error::SMTPError,
+    server_response::*,
+    smtp_client::*,
+    smtp_server::*,
+    statement::*,
+    Result as SMTPResult, SMTPConnectionState, CRLF, END_OF_MULTILINE_COMMAND,
 };
 
 #[test]
