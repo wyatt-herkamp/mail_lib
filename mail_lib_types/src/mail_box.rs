@@ -18,7 +18,23 @@ impl Display for Mailbox {
         }
     }
 }
-
+impl Mailbox {
+    pub fn new(name: Option<String>, email: EmailAddress) -> Self {
+        Self { name, email }
+    }
+    pub fn parse<'a>(input: &'a str) -> Result<Self, InvalidMailBox<'a>> {
+        Mailbox::try_from(input)
+    }
+    pub fn get_local(&self) -> &str {
+        self.email.get_local()
+    }
+    pub fn get_domain(&self) -> &str {
+        self.email.get_domain()
+    }
+    pub fn get_name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+}
 #[cfg(feature = "serde")]
 mod _serde {
     use serde::{Deserialize, Serialize};
@@ -61,11 +77,6 @@ impl Display for InvalidMailBox<'_> {
             }
         }
         Ok(())
-    }
-}
-impl Mailbox {
-    pub fn new(name: Option<String>, email: EmailAddress) -> Self {
-        Self { name, email }
     }
 }
 impl<'a> TryFrom<&'a str> for Mailbox {

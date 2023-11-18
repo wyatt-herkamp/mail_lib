@@ -1,7 +1,11 @@
 [package]
 name = "mail_build"
-version = "0.1.0"
-edition = "2021"
+description = "Internally Used Macros for mail_lib"
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

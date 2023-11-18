@@ -1,12 +1,13 @@
 [workspace]
-members = [
-    "mail_lib_macros",
-    "mail_lib_types",
-    "mail_build",
-    "smtp_lib",
-    "mail_lib",
-]
+members = ["mail_lib_macros", "mail_lib_types", "mail_build", "smtp_lib"]
 resolver = "2"
+
+[workspace.package]
+version = "0.0.1"
+license = "MIT OR Apache-2.0"
+authors = ["Wyatt Jacob Herkamp <wherkamp@gmail.com>"]
+repository = "https://github.com/nitro-mail/mail_lib"
+edition = "2021"
 
 [workspace.dependencies]
 thiserror = "1"
@@ -26,3 +27,27 @@ auto_impl = "1"
 enum_helper = { git = "https://github.com/wyatt-herkamp/enum_helper.git", features = [
     "derive",
 ] }
+
+[package]
+name = "mail_lib"
+description = """
+A set of types for representing SMTP and other RFCs related to email. 
+The http crate for email
+"""
+version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+thiserror = { workspace = true }
+mail_lib_types = { path = "./mail_lib_types" }
+mail_build = { path = "./mail_build" }
+smtp_lib = { path = "./smtp_lib" }
+
+[features]
+full = []
+async = ["smtp_lib/async"]

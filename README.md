@@ -1,19 +1,22 @@
 # Mail_Lib
+
 A Generic Mail Library for Rust
 
+## Purpose of this Library?
+
+This library has the purpose of allowing you to implement Email Servers and Clients in Rust.
+
 ## RFCS Implemented
+
 All RFCs implemented are in a generic form. To handle parsing and building of the commands and types shown and described in the RFCS
 It is up to you to actually use the library to build an Email Client or Server.
 
 ### SMTP
+
 - [ ] Simple Mail Transfer Protocol [RFC 5321](https://datatracker.ietf.org/doc/html/rfc5321)
 
-
-
-
-
-
 ### Email
+
 - [ ] Internet Message Format [RFC 5322](https://datatracker.ietf.org/doc/html/rfc5322)
 - [ ] MIME Part One: Format of Internet Message Bodies [RFC 2045](https://datatracker.ietf.org/doc/html/rfc2045)
 - [ ] MIME Part Two: Media Types [RFC 2046](https://datatracker.ietf.org/doc/html/rfc2046)

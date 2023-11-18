@@ -19,7 +19,7 @@ pub struct RawMailBox {
     pub domain: String,
 }
 
-pub fn mailbox<'a>() -> impl Parser<'a, &'a str, RawMailBox, extra::Err<Cheap>> {
+pub fn mailbox<'a>() -> impl Parser<'a, &'a str, RawMailBox, super::ErrType<'a>> {
     choice((
         name_addr(),
         base::addr_spec().map(|addr| {
@@ -34,7 +34,7 @@ pub fn mailbox<'a>() -> impl Parser<'a, &'a str, RawMailBox, extra::Err<Cheap>> 
 }
 /// Name <email@example>
 /// "Display Name" <email@example>
-pub fn name_addr<'a>() -> impl Parser<'a, &'a str, RawMailBox, extra::Err<Cheap>> {
+pub fn name_addr<'a>() -> impl Parser<'a, &'a str, RawMailBox, super::ErrType<'a>> {
     base::pharse()
         .padded()
         .then_ignore(just('<'))

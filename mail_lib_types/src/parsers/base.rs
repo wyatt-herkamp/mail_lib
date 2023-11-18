@@ -1,17 +1,20 @@
+
 use chumsky::prelude::*;
-pub fn wsp<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Cheap>> {
+
+
+pub fn wsp<'a>() -> impl Parser<'a, &'a str, char, super::ErrType<'a>> {
     choice((just(' '), just('\t')))
 }
-pub fn fws<'a>() -> impl Parser<'a, &'a str, Option<String>, extra::Err<Cheap>> {
+pub fn fws<'a>() -> impl Parser<'a, &'a str, Option<String>, super::ErrType<'a>> {
     wsp()
         .map(|v| v.to_string())
         .or_not()
         .then_ignore(wsp().ignored().repeated())
 }
-pub fn word<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn word<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     choice((quoted_content(), atom()))
 }
-pub fn atom<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn atom<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     fws()
         .then(atext().repeated().at_least(1).collect::<String>())
         .map(|(wsp, atext)| {
@@ -22,10 +25,10 @@ pub fn atom<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
             }
         })
 }
-pub fn pharse<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn pharse<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     word()
 }
-pub fn atext<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Cheap>> {
+pub fn atext<'a>() -> impl Parser<'a, &'a str, char, super::ErrType<'a>> {
     choice((
         just('!'),
         just('#'),
@@ -51,19 +54,19 @@ pub fn atext<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Cheap>> {
         one_of('0'..='9'),
     ))
 }
-pub fn addr_spec<'a>() -> impl Parser<'a, &'a str, (String, String), extra::Err<Cheap>> {
+pub fn addr_spec<'a>() -> impl Parser<'a, &'a str, (String, String), super::ErrType<'a>> {
     local_part().then_ignore(just('@')).then(domain())
 }
 
-pub fn local_part<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn local_part<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     choice((dot_atom(), quoted_content(), obs_local_part()))
 }
 
-pub fn domain<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn domain<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     choice((dot_atom(), obs_domain()))
 }
 
-pub fn dot_atom<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn dot_atom<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     fws().then(dot_atom_text()).map(|(wsp, atext)| {
         if let Some(wsp) = wsp {
             format!("{}{}", wsp, atext)
@@ -72,7 +75,7 @@ pub fn dot_atom<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
         }
     })
 }
-pub fn dot_atom_text<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn dot_atom_text<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     atext()
         .repeated()
         .at_least(1)
@@ -82,22 +85,17 @@ pub fn dot_atom_text<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>
         .map(|v| v.join("."))
 }
 
-fn text<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Cheap>> {
+fn text<'a>() -> impl Parser<'a, &'a str, char, super::ErrType<'a>> {
     any().filter(|c| matches!(u32::from(*c), 1..=9 | 11 | 12 | 14..=127))
 }
-fn quoted_pair<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Cheap>> {
+fn quoted_pair<'a>() -> impl Parser<'a, &'a str, char, super::ErrType<'a>> {
     just('\\').ignore_then(text())
 }
-fn qtext<'a>() -> impl Parser<'a, &'a str, char, extra::Err<Cheap>> {
+fn qtext<'a>() -> impl Parser<'a, &'a str, char, super::ErrType<'a>> {
     choice((atext(), just(' ')))
 }
-pub fn qcontent<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
-    choice((quoted_pair(), qtext()))
-        .repeated()
-        .collect::<Vec<_>>()
-        .map(|v| v.into_iter().collect::<String>())
-}
-pub fn quoted_content<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+
+pub fn quoted_content<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     choice((quoted_pair(), qtext()))
         .repeated()
         .collect::<Vec<_>>()
@@ -110,16 +108,21 @@ pub fn quoted_content<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap
         })
 }
 
-pub fn obs_domain<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn obs_domain<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     atom()
         .separated_by(just('.'))
         .collect::<Vec<_>>()
         .map(|v| v.join("."))
 }
 /// Multiple words combined by dots
-pub fn obs_local_part<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Cheap>> {
+pub fn obs_local_part<'a>() -> impl Parser<'a, &'a str, String, super::ErrType<'a>> {
     word()
         .separated_by(just('.'))
         .collect::<Vec<_>>()
         .map(|v| v.join("."))
+}
+#[cfg(test)]
+mod tests {
+    #[test]
+    pub fn test_local() {}
 }

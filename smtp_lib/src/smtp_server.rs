@@ -6,7 +6,6 @@ use std::{
 
 use auto_impl::auto_impl;
 use enum_helper::EnumOfKeys;
-use mail_lib_types::credentials::LoginMechanism;
 use thiserror::Error;
 
 use crate::SMTPConnectionState;
@@ -35,7 +34,7 @@ pub enum ServerExtensionParseError {
 pub enum SMTPServerExtension {
     Size(usize),
     StartTLS,
-    Auth(Vec<LoginMechanism>),
+    //Auth(Vec<LoginMechanism>),
     #[enum_of_keys(default=name)]
     #[enum_attr(strum(default))]
     Other {
@@ -48,9 +47,9 @@ impl Display for SMTPServerExtension {
         match self {
             SMTPServerExtension::Size(size) => write!(f, "SIZE {}", size),
             SMTPServerExtension::StartTLS => write!(f, "STARTTLS"),
-            SMTPServerExtension::Auth(value) => {
-                write!(f, "AUTH {}", LoginMechanism::format_iter(value.iter()))
-            }
+            /// SMTPServerExtension::Auth(value) => {
+            //    write!(f, "AUTH {}", LoginMechanism::format_iter(value.iter()))
+            //}
             SMTPServerExtension::Other { name, value } => {
                 if let Some(value) = value {
                     write!(f, "{} {}", name, value)
@@ -80,7 +79,7 @@ impl TryFrom<String> for SMTPServerExtension {
                 Ok(Self::Size(size))
             }
             "STARTLS" => Ok(Self::StartTLS),
-            "AUTH" => Ok(Self::Auth(LoginMechanism::from_iter(split))),
+            //"AUTH" => Ok(Self::Auth(LoginMechanism::from_iter(split))),
             other_key => {
                 let other_key = other_key.to_string();
                 let other_data = value.splitn(2, " ").nth(1).map(|s| s.to_string());

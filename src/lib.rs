@@ -1,4 +1,8 @@
-pub use mail_lib_types::{credentials::*, email_address::*};
+/*!
+ * # Mail_lib
+ */
+#[doc(inline)]
+pub use mail_lib_types;
 #[cfg(feature = "async")]
 pub use smtp_lib::{
     commands::async_traits::*, smtp_client::async_traits::*, smtp_server::async_traits::*,
