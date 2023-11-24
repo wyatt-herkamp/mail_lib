@@ -9,9 +9,11 @@ pub trait SMTPClient {
 /// ### Notes
 /// The Future Types will be dropped when Rust 1.74 goes into beta https://blog.rust-lang.org/inside-rust/2023/05/03/stabilizing-async-fn-in-trait.html#timeline-and-roadmap
 #[cfg(feature = "async")]
-pub mod async_traits{
-    use auto_impl::auto_impl;
+pub mod async_traits {
     use std::future::Future;
+
+    use auto_impl::auto_impl;
+
     use crate::smtp_client::SMTPClient;
 
     #[auto_impl(&mut, Box)]
@@ -31,5 +33,4 @@ pub mod async_traits{
         /// Reads til
         fn read_til_end(&'a mut self) -> Self::ReadTilEndFuture;
     }
-
 }

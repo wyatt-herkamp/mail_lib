@@ -1,16 +1,21 @@
+/*!
+# Representation of an Email Address
+ */
 mod validation;
 
 use std::{
-    fmt::Display,
+    fmt::{Debug, Display},
     hash::{Hash, Hasher},
     ops::Deref,
     str::FromStr,
 };
 
+use digestible::Digestible;
 use strum::Display;
 pub use validation::{
     validate_domain, validate_local_part, EmailErrorMessage, InvalidEmailAddress,
 };
+
 /// Email Address Parts
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -24,11 +29,22 @@ pub enum EmailPart {
     /// After the @
     Domain,
 }
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub use mail_lib_macros::from_static_email;
+/// Representation of an Email Address
+///
+/// Fields are private to prevent invalid email addresses from being created.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EmailAddress {
-    pub email_address: String,
-    pub at_index: usize,
+    email_address: String,
+    at_index: usize,
+}
+impl Debug for EmailAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EmailAddress")
+            .field("local_part", &self.get_local())
+            .field("domain", &self.get_domain())
+            .finish()
+    }
 }
 impl Deref for EmailAddress {
     type Target = str;
@@ -41,6 +57,14 @@ impl AsRef<str> for EmailAddress {
         &self.email_address
     }
 }
+impl Digestible for EmailAddress {
+    fn digest<B: digestible::byteorder::ByteOrder, W: digestible::DigestWriter>(
+        &self,
+        writer: &mut W,
+    ) {
+        self.email_address.digest::<B, W>(writer)
+    }
+}
 impl Hash for EmailAddress {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.email_address.hash(state);
@@ -49,7 +73,7 @@ impl Hash for EmailAddress {
 
 impl Display for EmailAddress {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.email_address.fmt(f)
+        Display::fmt(&self.email_address, f)
     }
 }
 
@@ -99,7 +123,18 @@ impl EmailAddress {
             at_index,
         })
     }
-
+    /// Creates an email address without checking for validity.
+    /// Takes a String and the index of the `@` symbol.
+    /// This is unsafe because it could cause undefined behavior if the email is invalid.
+    ///
+    /// However, this is good for static strings that are known to be valid.
+    pub unsafe fn new_unchecked_raw(email_address: impl Into<String>, at_index: usize) -> Self {
+        EmailAddress {
+            email_address: email_address.into(),
+            at_index,
+        }
+    }
+    /// Creates an email address without checking for validity.
     pub unsafe fn new_unchecked_from_parts(
         local: impl AsRef<str>,
         domain: impl AsRef<str>,
@@ -113,18 +148,22 @@ impl EmailAddress {
             at_index,
         }
     }
-    pub fn into_parts(&self) -> (&str, &str) {
+    /// Gets a reference to the Email Address parts
+    pub fn as_parts(&self) -> (&str, &str) {
         self.email_address.split_at(self.at_index)
     }
-    pub fn into_parts_owned(&self) -> (String, String) {
+    /// Gets the parts of the Email Address as owned Strings
+    pub fn parts_owned(&self) -> (String, String) {
         let (local, domain) = self.email_address.split_at(self.at_index);
         (local.to_string(), domain.to_string())
     }
     /// Gets the Local Part of the Email Address
+    #[inline]
     pub fn get_local(&self) -> &str {
         &self.email_address[..self.at_index]
     }
     /// Gets a reference to the Domain
+    #[inline]
     pub fn get_domain(&self) -> &str {
         &self.email_address[self.at_index + 1..]
     }
@@ -137,7 +176,7 @@ impl EmailAddress {
 }
 impl Into<(String, String)> for EmailAddress {
     fn into(self) -> (String, String) {
-        self.into_parts_owned()
+        self.parts_owned()
     }
 }
 impl<L: AsRef<str>, D: AsRef<str>> TryFrom<(L, D)> for EmailAddress {
@@ -235,7 +274,14 @@ mod _serde {
 mod tests {
     use pretty_assertions::assert_eq;
 
+    use super::{from_static_email, EmailAddress};
     use crate::email_address::EmailErrorMessage;
+    #[test]
+    fn test_macro() {
+        let email_address = from_static_email!("test@example.com");
+        let safe_email_address = EmailAddress::new("test@example.com").unwrap();
+        assert_eq!(email_address, safe_email_address);
+    }
 
     fn check(raw: &str, local: &str, domain: &str) {
         let email_address = super::EmailAddress::new(raw);

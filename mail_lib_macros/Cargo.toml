@@ -14,7 +14,11 @@ proc-macro = true
 [dependencies]
 quote = "1"
 proc-macro2 = "1"
-syn = { version = "2", features = ["full"] }
+syn = { version = "2", features = ["full", "extra-traits"] }
 
 [dev-dependencies]
 strum = { workspace = true }
+
+[features]
+default = ["types_macros"]
+types_macros = []

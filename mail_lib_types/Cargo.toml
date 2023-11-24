@@ -20,9 +20,10 @@ chumsky = { version = "1.0.0-alpha.6", default-features = false, features = [
 ] }
 enum_helper.workspace = true
 tracing = { workspace = true, optional = true }
+digestible = { workspace = true }
+mail_lib_macros = { path = "../mail_lib_macros" }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 chumsky = { version = "1.0.0-alpha.6", features = ["std", "spill-stack"] }
-ariadne = { version = "0.3", optional = true }
 [dev-dependencies]
 serde = { version = "1" }
 serde_json = { version = "1" }
@@ -30,7 +31,6 @@ pretty_assertions = { version = "1" }
 criterion = { version = "0.5", features = ["html_reports"] }
 [features]
 default = ["serde", "zeroize", "rkyv"]
-
 
 [[bench]]
 name = "email_address"

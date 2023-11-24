@@ -1,8 +1,8 @@
-use crate::smtp_server::ServerExtensionParseError;
-use crate::statement::StatementParseError;
-
 use std::string::FromUtf8Error;
+
 use thiserror::Error;
+
+use crate::{smtp_server::ServerExtensionParseError, statement::StatementParseError};
 
 #[derive(Debug, Error)]
 pub enum SMTPError {

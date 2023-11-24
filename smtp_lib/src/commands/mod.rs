@@ -19,10 +19,12 @@ pub trait SMTPCommand: Sized {
 }
 
 pub mod async_traits {
-    use crate::commands::SMTPCommand;
-    use crate::smtp_server::async_traits::AsyncSMTPConnection;
     use std::future::Future;
-    use crate::smtp_client::async_traits::AsyncSMTPClient;
+
+    use crate::{
+        commands::SMTPCommand, smtp_client::async_traits::AsyncSMTPClient,
+        smtp_server::async_traits::AsyncSMTPConnection,
+    };
 
     /// ### Notes
     /// The Future Types will be dropped when Rust 1.74 goes into beta https://blog.rust-lang.org/inside-rust/2023/05/03/stabilizing-async-fn-in-trait.html#timeline-and-roadmap

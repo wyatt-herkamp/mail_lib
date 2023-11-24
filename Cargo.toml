@@ -8,7 +8,10 @@ license = "MIT OR Apache-2.0"
 authors = ["Wyatt Jacob Herkamp <wherkamp@gmail.com>"]
 repository = "https://github.com/nitro-mail/mail_lib"
 edition = "2021"
-
+[workspace.lints.rust]
+missing_docs = "warn"
+[workspace.lints.clippy]
+str_to_string = "deny"
 [workspace.dependencies]
 thiserror = "1"
 tokio = { version = "1", features = ["full"] }
@@ -16,7 +19,7 @@ tracing = "0.1"
 futures = { version = "0.3" }
 regex = "1"
 serde = { version = "1", features = ["derive"] }
-impl-tools = "0.9"
+impl-tools = "0.10"
 anyhow = "1"
 bytes = "1"
 async-trait = "0.1"
@@ -27,7 +30,11 @@ auto_impl = "1"
 enum_helper = { git = "https://github.com/wyatt-herkamp/enum_helper.git", features = [
     "derive",
 ] }
-
+digestible = { version = "0.2", default-features = false, features = [
+    "derive",
+    "std",
+    "alloc",
+] }
 [package]
 name = "mail_lib"
 description = """

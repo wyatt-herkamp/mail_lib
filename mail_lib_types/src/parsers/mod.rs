@@ -1,9 +1,5 @@
-
-pub mod base;
-pub mod mail_box;
+#![allow(missing_docs)]
+#[doc(hidden)]
 pub mod rfcs;
 
-#[cfg(not(feature = "ariadne"))]
-pub(crate) type ErrType<'a> = chumsky::extra::Err<chumsky::error::Cheap>;
-#[cfg(feature = "ariadne")]
-pub(crate) type ErrType<'a> = chumsky::extra::Err<chumsky::error::Rich<'a, char>>;
+pub type ErrType<'a> = chumsky::extra::Err<chumsky::error::Cheap>;

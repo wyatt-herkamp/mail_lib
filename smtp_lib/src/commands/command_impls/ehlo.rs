@@ -1,9 +1,11 @@
-use crate::commands::SMTPCommand;
-use crate::error::SMTPError;
-use crate::server_response::{MultilineServerResponse, ResponseCode};
-use crate::smtp_server::SMTPServerExtension;
-
 use std::ops::Deref;
+
+use crate::{
+    commands::SMTPCommand,
+    error::SMTPError,
+    server_response::{MultilineServerResponse, ResponseCode},
+    smtp_server::SMTPServerExtension,
+};
 
 /// The data that is in the EHLO command
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -65,13 +67,15 @@ impl TryFrom<MultilineServerResponse> for EhloResponse {
         let mut extensions = Vec::with_capacity(lines.len());
         for line in lines {
             let Some(message) = line.message else {
-                return Err(SMTPError::InvalidResponse("Expected extension, got none"))
+                return Err(SMTPError::InvalidResponse("Expected extension, got none"));
             };
             let extension = SMTPServerExtension::try_from(message)?;
             extensions.push(extension);
         }
-        let Some(hello_message) = hello.message else{
-            return Err(SMTPError::InvalidResponse("Expected hello message, got none"))
+        let Some(hello_message) = hello.message else {
+            return Err(SMTPError::InvalidResponse(
+                "Expected hello message, got none",
+            ));
         };
         Ok(EhloResponse::Success {
             hello: (hello.code, hello_message),
@@ -96,15 +100,17 @@ impl SMTPCommand for EhloCommand {
 
 #[cfg(feature = "async")]
 mod async_impl {
-    use crate::commands::async_traits::AsyncSMTPCommand;
-    use super::{EhloCommand, EhloCommandData, EhloResponse};
-
-    use crate::server_response::{MultilineServerResponse, ResponseCode, ServerResponseLine};
-    use crate::smtp_server::async_traits::AsyncSMTPConnection;
-    use crate::statement::async_statement::AsyncMultilineStatement;
-    use crate::CRLF;
     use futures::future::{ready, BoxFuture, Ready};
-    use crate::smtp_client::async_traits::AsyncSMTPClient;
+
+    use super::{EhloCommand, EhloCommandData, EhloResponse};
+    use crate::{
+        commands::async_traits::AsyncSMTPCommand,
+        server_response::{MultilineServerResponse, ResponseCode, ServerResponseLine},
+        smtp_client::async_traits::AsyncSMTPClient,
+        smtp_server::async_traits::AsyncSMTPConnection,
+        statement::async_statement::AsyncMultilineStatement,
+        CRLF,
+    };
 
     impl<'a> AsyncSMTPCommand<'a> for EhloCommand {
         type ServerHandleRead = Ready<crate::Result<Self::ClientCommand>>;

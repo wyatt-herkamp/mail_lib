@@ -1,3 +1,10 @@
+/*!
+# mail_lib_types
+
+Types Representing the email standard
+
+ */
+
 pub mod email_address;
 pub mod mail_box;
 pub(crate) mod parsers;

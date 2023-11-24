@@ -1,6 +1,6 @@
 use mail_lib_types::{
     email_address::{EmailErrorMessage, EmailPart},
-    mail_box::Mailbox,
+    mail_box::MailBox,
 };
 use pretty_assertions::assert_eq;
 use serde::{Deserialize, Serialize};
@@ -43,7 +43,7 @@ pub fn valid_tests() {
 
     for test in tests {
         println!("Testing Email {:?}", test);
-        let email_address = Mailbox::parse(&test.email);
+        let email_address = MailBox::try_from(test.email.as_str());
         match email_address {
             Ok(email_address) => {
                 assert_eq!(email_address.get_local(), test.local);
@@ -61,7 +61,7 @@ pub fn valid_mailbox_test() {
 
     for test in tests {
         println!("Testing Email {:?}", test);
-        let email_address = Mailbox::parse(&test.mailbox);
+        let email_address = MailBox::try_from(test.mailbox.as_str());
         match email_address {
             Ok(email_address) => {
                 assert_eq!(email_address.get_local(), test.local);
@@ -79,7 +79,7 @@ pub fn invalid_tests() {
 
     for test in tests {
         println!("{:?}", test);
-        let email_address = Mailbox::parse(&test.email);
+        let email_address = MailBox::try_from(test.email.as_str());
 
         match email_address {
             Ok(email_address) => {

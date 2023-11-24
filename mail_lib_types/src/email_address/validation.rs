@@ -21,7 +21,10 @@ const LBRACKET: char = '[';
 const RBRACKET: char = ']';
 
 const UTF8_START: char = '\u{0080}';
+/// Invalid Email Address Error Messages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
+#[non_exhaustive]
+#[allow(missing_docs)]
 pub enum EmailErrorMessage {
     #[error("Invalid Character: `{0}` at position {1}")]
     InvalidCharacter(char, usize),
@@ -34,10 +37,12 @@ pub enum EmailErrorMessage {
     #[error("{0}")]
     Other(&'static str),
 }
-
+/// Invalid Email Address Error
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
 pub struct InvalidEmailAddress {
+    /// The part of the email address that is invalid
     pub error_part: Option<EmailPart>,
+    /// The error message
     pub error_message: EmailErrorMessage,
 }
 impl From<&'static str> for InvalidEmailAddress {
@@ -82,6 +87,7 @@ pub static MAX_LOCAL_PART: usize = 64;
 pub static SUB_DOMAIN_MAX_LENGTH: usize = 63;
 static QUOTE: char = '"';
 
+/// Validate an email address domain(aka the part after the @)
 pub fn validate_domain(domain: &str) -> Result<(), InvalidEmailAddress> {
     if domain.is_empty() || domain.len() > MAX_DOMAIN_LENGTH {
         Err((EmailErrorMessage::InvalidLengthOfDomain, EmailPart::Domain).into())
@@ -91,7 +97,7 @@ pub fn validate_domain(domain: &str) -> Result<(), InvalidEmailAddress> {
         parse_text_domain(domain)
     }
 }
-
+/// Validate an email address local part(aka the part before the @)
 pub fn validate_local_part(local: &str) -> Result<(), InvalidEmailAddress> {
     if local.is_empty() || local.len() > MAX_LOCAL_PART {
         Err((EmailErrorMessage::InvalidLengthOfUser, EmailPart::Local).into())

@@ -1,7 +1,14 @@
-use crate::statement::{MultiLineStatement, SingleLineStatement, Statement, StatementParseError, StatementWriteError, StatementWriter};
+use std::{
+    fmt::{Display, Formatter, Write},
+    str::FromStr,
+};
+
 use bytes::{BufMut, Bytes, BytesMut};
-use std::fmt::{Display, Formatter, Write};
-use std::str::FromStr;
+
+use crate::statement::{
+    MultiLineStatement, SingleLineStatement, Statement, StatementParseError, StatementWriteError,
+    StatementWriter,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResponseCode {
