@@ -66,6 +66,7 @@ pub fn valid_mailbox_test() {
             Ok(email_address) => {
                 assert_eq!(email_address.get_local(), test.local);
                 assert_eq!(email_address.get_domain(), test.domain);
+                
             }
             Err(e) => {
                 panic!("{:?}: {}", test.mailbox, e)

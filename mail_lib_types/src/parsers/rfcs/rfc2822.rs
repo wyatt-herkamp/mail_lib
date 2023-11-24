@@ -9,12 +9,20 @@ use crate::{mail_box::RawMailBox, parsers::ErrType};
 /// [Folding Whitespace Defined in RFC 2822](https://datatracker.ietf.org/doc/html/rfc2822#section-3.2.3)
 pub fn fws<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
     let rfc2822_fws = {
-        let wsp_then_crlf = wsp().repeated().collect::<Vec<_>>().then_ignore(crlf());
+        let wsp_then_crlf = wsp()
+            .repeated()
+            .collect::<Vec<_>>()
+            .then_ignore(crlf())
+            .or_not();
         wsp_then_crlf
             .then(wsp().repeated().at_least(1).collect::<Vec<_>>())
-            .map(|(mut wsp_then_crlf, wsp)| {
-                wsp_then_crlf.extend(wsp);
-                wsp_then_crlf
+            .map(|(wsp_then_crlf, wsp)| {
+                if let Some(mut wsp_then_crlf) = wsp_then_crlf {
+                    wsp_then_crlf.extend(wsp);
+                    wsp_then_crlf
+                } else {
+                    wsp
+                }
             })
     };
     // TODO Support obs_fws
@@ -23,20 +31,26 @@ pub fn fws<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
 /// FWS but it just returns the number of spaces
 pub fn fws_counted<'a>() -> impl Parser<'a, &'a str, usize, ErrType<'a>> {
     let rfc2822_fws = {
-        let wsp_then_crlf = wsp().repeated().collect::<Vec<_>>().then_ignore(crlf());
+        let wsp_then_crlf = wsp()
+            .repeated()
+            .collect::<Vec<_>>()
+            .then_ignore(crlf())
+            .or_not();
         wsp_then_crlf
             .then(wsp().repeated().at_least(1).collect::<Vec<_>>())
-            .map(|(wsp_then_crlf, wsp)| wsp_then_crlf.len() + wsp.len())
+            .map(|(wsp_then_crlf, wsp)| {
+                let mut count = wsp.len();
+                if let Some(wsp_then_crlf) = wsp_then_crlf {
+                    count += wsp_then_crlf.len();
+                }
+                count
+            })
     };
     // TODO Support obs_fws
     rfc2822_fws
 }
-pub fn quoted_pair<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
-    just('\\')
-        .then(rfc2234::char())
-        .map(|v| v.1)
-        .or_not()
-        .map(|v| v.unwrap_or('\\'))
+pub fn quoted_pair<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
+    just('\\').ignore_then(text()).map(|v| format!("\\{}", v))
 }
 pub fn no_ws_ctl<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
     choice((
@@ -136,9 +150,10 @@ pub fn atext<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
 /// An Atom
 pub fn atom<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
     cfws()
+        .or_not()
         .ignored()
         .then(atext().repeated().at_least(1).collect::<String>())
-        .then_ignore(cfws())
+        .then_ignore(cfws().or_not())
         .map(|(_, atext)| atext)
 }
 
@@ -170,8 +185,8 @@ pub fn qtext<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
 /// ```ebnf
 /// qcontent        =       qtext / quoted-pair
 /// ```
-pub fn qcontent<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
-    qtext().or(quoted_pair()).or_not().map(|v| v.unwrap_or(' '))
+pub fn qcontent<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
+    qtext().map(|v| v.to_string()).or(quoted_pair())
 }
 /// ```ebnf
 /// quoted-string   =       [CFWS]
@@ -184,26 +199,24 @@ pub fn quoted_string<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
         .then(qcontent())
         .repeated()
         .collect::<Vec<_>>()
+        .delimited_by(dquote(), fws().or_not().then(dquote()))
         .map(|v| {
             let mut s = String::with_capacity(v.len());
             for (spaces, c) in v {
                 if let Some(spaces) = spaces {
-                    s.push_str(&" ".repeat(spaces));
+                    for _ in 0..spaces {
+                        s.push(' ');
+                    }
                 }
-                s.push(c);
+                s.push_str(&c);
             }
             s
         });
 
     cfws()
         .or_not()
-        .ignored()
-        .then_ignore(dquote())
-        .then(inner)
-        .then_ignore(fws().or_not())
-        .then_ignore(dquote())
+        .ignore_then(inner)
         .then_ignore(cfws().or_not())
-        .map(|(_, content)| content)
 }
 pub fn word<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
     choice((quoted_string(), atom()))
@@ -235,19 +248,44 @@ pub fn pharse<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
 pub fn dot_atom<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
     cfws()
         .or_not()
-        .ignored()
-        .then(dot_atom_text())
+        .ignore_then(dot_atom_text())
         .then_ignore(cfws().or_not())
-        .map(|(_, atext)| atext)
 }
 pub fn local_part<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    choice((dot_atom(), quoted_string()))
+    quoted_string()
+        .map(|v| format!(r#""{}""#, v))
+        .or(dot_atom())
 }
 pub fn domain<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    choice((dot_atom(), domain_literal()))
+    domain_literal().or(dot_atom())
+}
+pub fn dtext<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
+    choice((
+        no_ws_ctl(),
+        one_of('\x21'..='\x5A'),
+        one_of('\x5E'..='\x7E'),
+    ))
+}
+pub fn dcontent<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
+    quoted_pair().or(dtext().map(|v| v.to_string()))
 }
 pub fn domain_literal<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    todo()
+    let domain_inner = fws()
+        .or_not()
+        .ignore_then(dcontent())
+        .repeated()
+        .collect::<Vec<_>>()
+        .map(|v| v.into_iter().collect::<String>());
+    crlf()
+        .or_not()
+        .then(just('['))
+        .ignore_then(domain_inner)
+        .then_ignore(fws().or_not())
+        .then_ignore(just(']'))
+        .then_ignore(crlf().or_not())
+        .map(|v| {
+            return format!("[{}]", v);
+        })
 }
 pub fn addr_spec<'a>() -> impl Parser<'a, &'a str, (String, String), ErrType<'a>> {
     local_part().then_ignore(just('@')).then(domain())
@@ -279,4 +317,113 @@ pub fn mailbox<'a>() -> impl Parser<'a, &'a str, RawMailBox, ErrType<'a>> {
             domain,
         }),
     ))
+}
+#[cfg(test)]
+mod tests {
+    use chumsky::Parser;
+
+    use crate::parsers::rfcs::rfc2822::{domain, domain_literal, quoted_string};
+
+    use super::{display_name, fws_counted};
+    use pretty_assertions::assert_eq;
+    #[test]
+    pub fn test_fws() {
+        assert_eq!(fws_counted().parse("  ").into_result(), Ok(2))
+    }
+
+    #[test]
+    pub fn test_display_name() {
+        assert_eq!(
+            display_name().parse("John").into_result(),
+            Ok("John".to_string())
+        );
+        assert_eq!(
+            display_name().parse(r#""Darth Vader""#).into_result(),
+            Ok(r#"Darth Vader"#.to_string())
+        );
+    }
+    #[test]
+    pub fn test_quoted_string() {
+        assert_eq!(
+            quoted_string().parse(r#""Darth Vader""#).into_result(),
+            Ok("Darth Vader".to_string())
+        );
+    }
+    #[test]
+    pub fn test_domain_literal() {
+        assert_eq!(
+            domain_literal().parse("[127.0.0.1]").into_result(),
+            Ok("[127.0.0.1]".to_string())
+        );
+        assert_eq!(
+            domain_literal()
+                .parse("[2001:0db8:85a3:0000:0000:8a2e:0370:7334]")
+                .into_result(),
+            Ok("[2001:0db8:85a3:0000:0000:8a2e:0370:7334]".to_string())
+        );
+    }
+    #[test]
+    pub fn test_domain() {
+        assert_eq!(
+            domain().parse("example.com").into_result(),
+            Ok("example.com".to_string())
+        );
+        assert_eq!(
+            domain().parse("[127.0.0.1]").into_result(),
+            Ok("[127.0.0.1]".to_string())
+        );
+
+        assert_eq!(
+            domain()
+                .parse("[2001:0db8:85a3:0000:0000:8a2e:0370:7334]")
+                .into_result(),
+            Ok("[2001:0db8:85a3:0000:0000:8a2e:0370:7334]".to_string())
+        );
+    }
+}
+#[cfg(test)]
+mod address_spec_tests {
+    use chumsky::Parser;
+    use pretty_assertions::assert_eq;
+
+    use crate::parsers::rfcs::rfc2822::addr_spec;
+
+    fn check(raw: &str, local: &str, domain: &str) {
+        let email_address = addr_spec().parse(raw).into_result();
+        if let Err(e) = email_address {
+            panic!("{:?}: {:?}", raw, e);
+        }
+        let email_address = email_address.unwrap();
+        assert_eq!(email_address.0, local);
+        assert_eq!(email_address.1, domain);
+    }
+    #[test]
+    fn test_email_address() {
+        check("email@example.com", "email", "example.com");
+    }
+
+    #[test]
+    fn test_weird_cases() {
+        check(
+            "disposable.style.email.with+symbol@example.com",
+            "disposable.style.email.with+symbol",
+            "example.com",
+        );
+        check(
+            "other.email-with-dash@example.com",
+            "other.email-with-dash",
+            "example.com",
+        );
+        check("x@example.com", "x", "example.com");
+        check(
+            r#""much.more unusual"@example.com"#,
+            r#""much.more unusual""#,
+            "example.com",
+        );
+        check(
+            r#""very.(),:;<>[]\".VERY.\"very@ \"very\".unusual"@strange.example.com"#,
+            r#""very.(),:;<>[]\".VERY.\"very@ \"very\".unusual""#,
+            "strange.example.com",
+        );
+    }
 }

@@ -80,14 +80,14 @@ pub fn hexdig<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
 /// HTAB =  %x09 ; horizontal tab
 /// ```
 pub fn htab<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
-    just('\t')
+    just('\x09')
 }
 /// [Whitespace Defined in RFC 2234](https://datatracker.ietf.org/doc/html/rfc2234#section-6.1)
 /// ```ebnf
 /// WSP =  SP / HTAB ; white space
 /// ```
 pub fn wsp<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
-    choice((just(' '), htab()))
+    just(' ').or(htab())
 }
 /// [LWSP Defined in RFC 2234](https://datatracker.ietf.org/doc/html/rfc2234#section-6.1)
 /// ```ebnf
@@ -102,4 +102,18 @@ pub fn lwsp<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
         }
         s
     })
+}
+#[cfg(test)]
+mod tests {
+    use chumsky::Parser;
+
+    use pretty_assertions::assert_eq;
+    #[test]
+    pub fn wsp() {
+        let parser = super::wsp();
+        let result = parser.parse(" ").into_result();
+        assert_eq!(result, Ok(' '));
+        let result = parser.parse("\t").into_result();
+        assert_eq!(result, Ok('\t'));
+    }
 }
