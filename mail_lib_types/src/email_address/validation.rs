@@ -228,7 +228,6 @@ fn is_qcontent(s: &str) -> Option<(char, usize)> {
 
 fn parse_quoted_local_part(part: &str) -> Result<(), InvalidEmailAddress> {
     let part = &part[1..part.len() - 1];
-    println!("part: {}", part);
     if let Some((c, pos)) = is_qcontent(part) {
         return Err((
             EmailErrorMessage::InvalidCharacter(c, pos),

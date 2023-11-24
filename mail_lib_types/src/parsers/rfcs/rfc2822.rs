@@ -400,6 +400,14 @@ mod address_spec_tests {
     }
 
     #[test]
+    fn parse_a_bunch() {
+        let instant = std::time::Instant::now();
+        for _ in 0..1000 {
+            let _ = addr_spec().parse("example@exmaple.com");
+        }
+        println!("1000 in {:?}", instant.elapsed());
+    }
+    #[test]
     fn test_weird_cases() {
         check(
             "disposable.style.email.with+symbol@example.com",

@@ -7,7 +7,7 @@ Types Representing the email standard
 
 pub mod email_address;
 pub mod mail_box;
-pub(crate) mod parsers;
+pub mod parsers;
 pub use email_address::EmailAddress;
 
 /// A type alias for a boxed future that can be sent across threads.
