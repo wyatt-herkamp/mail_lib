@@ -31,19 +31,16 @@ pub fn fws<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
 /// FWS but it just returns the number of spaces
 pub fn fws_counted<'a>() -> impl Parser<'a, &'a str, usize, ErrType<'a>> {
     let rfc2822_fws = {
-        let wsp_then_crlf = wsp()
-            .repeated()
-            .collect::<Vec<_>>()
-            .then_ignore(crlf())
-            .or_not();
+        let wsp_then_crlf = wsp().repeated().count().then_ignore(crlf()).or_not();
         wsp_then_crlf
-            .then(wsp().repeated().at_least(1).collect::<Vec<_>>())
+            .then(wsp().repeated().at_least(1).count())
             .map(|(wsp_then_crlf, wsp)| {
-                let mut count = wsp.len();
-                if let Some(wsp_then_crlf) = wsp_then_crlf {
-                    count += wsp_then_crlf.len();
+                if let Some(mut wsp_then_crlf) = wsp_then_crlf {
+                    wsp_then_crlf += wsp;
+                    wsp_then_crlf
+                } else {
+                    wsp
                 }
-                count
             })
     };
     // TODO Support obs_fws
