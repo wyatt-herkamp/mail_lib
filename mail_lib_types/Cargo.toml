@@ -18,12 +18,16 @@ rkyv = { workspace = true, optional = true }
 chumsky = { git = "https://github.com/zesterer/chumsky.git", default-features = false, features = [
     "std",
 ] }
+either = "1"
 enum_helper.workspace = true
 tracing = { workspace = true, optional = true }
 digestible = { workspace = true }
 mail_lib_macros = { path = "../mail_lib_macros" }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-chumsky = { git = "https://github.com/zesterer/chumsky.git", features = ["std", "spill-stack"] }
+chumsky = { git = "https://github.com/zesterer/chumsky.git", features = [
+    "std",
+    "spill-stack",
+] }
 [dev-dependencies]
 serde = { version = "1" }
 serde_json = { version = "1" }
@@ -34,4 +38,10 @@ default = ["serde", "zeroize", "rkyv"]
 
 [[bench]]
 name = "email_address"
+harness = false
+[[bench]]
+name = "mailbox"
+harness = false
+[[bench]]
+name = "random_rfc"
 harness = false

@@ -87,7 +87,10 @@ pub fn htab<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
 /// WSP =  SP / HTAB ; white space
 /// ```
 pub fn wsp<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
-    just(' ').or(htab())
+    one_of([
+        '\x20', // SP
+        '\x09', // HTAB
+    ])
 }
 /// [LWSP Defined in RFC 2234](https://datatracker.ietf.org/doc/html/rfc2234#section-6.1)
 /// ```ebnf

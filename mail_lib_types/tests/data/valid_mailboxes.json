@@ -6,33 +6,27 @@
         "domain": "example.com"
     },
     {
-        "mailbox": "Example<example@example.com>",
-        "name": "Example",
-        "local": "example",
-        "domain": "example.com"
-    },
-    {
-        "mailbox": "Alice <alice@example.com>",
-        "name": "Alice",
+        "mailbox": "\"Alice in Wonderland\" <alice@wonderland.com>",
+        "name": "Alice in Wonderland",
         "local": "alice",
-        "domain": "example.com"
+        "domain": "wonderland.com"
     },
     {
-        "mailbox": "Bob <bob@example.com>",
-        "name": "Bob",
+        "mailbox": "\"Bob The Builder\" <bob@the.builder.com>",
+        "name": "Bob The Builder",
         "local": "bob",
-        "domain": "example.com"
+        "domain": "the.builder.com"
     },
     {
-        "mailbox": "Charlie <charlie@example.com>",
+        "mailbox": "Charlie <charlie.brown@example.com>",
         "name": "Charlie",
-        "local": "charlie",
+        "local": "charlie.brown",
         "domain": "example.com"
     },
     {
-        "mailbox": "David <david@example.com>",
+        "mailbox": "David <david.tennet@example.com>",
         "name": "David",
-        "local": "david",
+        "local": "david.tennet",
         "domain": "example.com"
     },
     {

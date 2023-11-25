@@ -1,7 +1,8 @@
 /*!
  * Parsers for [RFC 2822](https://datatracker.ietf.org/doc/html/rfc2822)
  */
-use chumsky::prelude::*;
+use chumsky::{container::Container, prelude::*};
+use either::Either;
 
 use super::rfc2234::{self, alpha, crlf, digit, dquote, wsp};
 use crate::{mail_box::RawMailBox, parsers::ErrType};
@@ -46,8 +47,8 @@ pub fn fws_counted<'a>() -> impl Parser<'a, &'a str, usize, ErrType<'a>> {
     // TODO Support obs_fws
     rfc2822_fws
 }
-pub fn quoted_pair<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    just('\\').ignore_then(text()).map(|v| format!("\\{}", v))
+pub fn quoted_pair<'a>() -> impl Parser<'a, &'a str, [char; 2], ErrType<'a>> {
+    just('\\').ignore_then(text()).map(|v| ['\\', v])
 }
 pub fn no_ws_ctl<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
     choice((
@@ -114,54 +115,57 @@ pub fn ccontent<'a>() -> impl Parser<'a, &'a str, Option<String>, ErrType<'a>> {
 pub fn comment<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
     todo()
 }
-pub fn cfws<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
+pub fn cfws<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
     // TODO Support Comments
-    fws().map(|v| v.into_iter().collect::<String>())
+    fws()
 }
 /// [atext Defined in RFC 2822](https://datatracker.ietf.org/doc/html/rfc2822#section-3.2.4)
 pub fn atext<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
     choice((
-        alpha(),
-        digit(),
-        just('!'),
-        just('#'),
-        just('$'),
-        just('%'),
-        just('&'),
-        just('\''),
-        just('*'),
-        just('+'),
-        just('-'),
-        just('/'),
-        just('='),
-        just('?'),
-        just('^'),
-        just('_'),
-        just('`'),
-        just('{'),
-        just('|'),
-        just('}'),
-        just('~'),
+        // Instead of having a choice inside of a choice call the parser directly
+        one_of('a'..='z'),
+        one_of('A'..='Z'),
+        one_of('0'..='9'),
+        one_of([
+            '!', '#', '$', '%', '&', '\'', '*', '+', '-', '/', '=', '?', '^', '_', '`', '{', '|',
+            '}', '~',
+        ]),
     ))
 }
+pub fn atext_seg<'a, C>() -> impl Parser<'a, &'a str, C, ErrType<'a>>
+where
+    C: Container<char>,
+{
+    atext().repeated().at_least(1).collect::<C>()
+}
 /// An Atom
-pub fn atom<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
+pub fn atom<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
     cfws()
         .or_not()
-        .ignored()
-        .then(atext().repeated().at_least(1).collect::<String>())
+        .ignore_then(atext().repeated().at_least(1).collect::<Vec<char>>())
         .then_ignore(cfws().or_not())
-        .map(|(_, atext)| atext)
 }
 
+/// ```ebnf
+/// dot-atom-text = 1*atext *("." 1*atext)
+/// ```
 pub fn dot_atom_text<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    atext()
-        .repeated()
-        .at_least(1)
-        .collect::<String>()
+    atext_seg::<String>()
         .separated_by(just('.'))
         .collect::<Vec<_>>()
-        .map(|v| v.join("."))
+        .map(|v| {
+            if v.len() == 1 {
+                return v.into_iter().next().unwrap();
+            }
+            let mut s = String::with_capacity(v.iter().map(|v| v.len() + 1).sum::<usize>());
+
+            s.push_str(&v[0]);
+            for v in v[1..].iter() {
+                s.push('.');
+                s.push_str(&v);
+            }
+            s
+        })
 }
 ///
 /// ```ebnf
@@ -182,15 +186,17 @@ pub fn qtext<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
 /// ```ebnf
 /// qcontent        =       qtext / quoted-pair
 /// ```
-pub fn qcontent<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    qtext().map(|v| v.to_string()).or(quoted_pair())
+pub fn qcontent<'a>() -> impl Parser<'a, &'a str, Either<char, [char; 2]>, ErrType<'a>> {
+    qtext()
+        .map(|v| Either::Left(v))
+        .or(quoted_pair().map(|v| Either::Right(v)))
 }
 /// ```ebnf
 /// quoted-string   =       [CFWS]
 ///                        DQUOTE *([FWS] qcontent) [FWS] DQUOTE
 ///                       [CFWS]
 /// ```
-pub fn quoted_string<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
+pub fn quoted_string<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
     let inner = fws_counted()
         .or_not()
         .then(qcontent())
@@ -198,14 +204,20 @@ pub fn quoted_string<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
         .collect::<Vec<_>>()
         .delimited_by(dquote(), fws().or_not().then(dquote()))
         .map(|v| {
-            let mut s = String::with_capacity(v.len());
+            let mut s = Vec::with_capacity(v.len());
             for (spaces, c) in v {
                 if let Some(spaces) = spaces {
                     for _ in 0..spaces {
                         s.push(' ');
                     }
                 }
-                s.push_str(&c);
+                match c {
+                    Either::Left(c) => s.push(c),
+                    Either::Right([escape, c]) => {
+                        s.push(escape);
+                        s.push(c);
+                    }
+                }
             }
             s
         });
@@ -215,31 +227,21 @@ pub fn quoted_string<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
         .ignore_then(inner)
         .then_ignore(cfws().or_not())
 }
-pub fn word<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
+pub fn word<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
     choice((quoted_string(), atom()))
 }
 
-pub fn obs_phrase<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    let obs_phrase_part_two = choice((word(), just('.').map(|v| v.to_string()), cfws()))
+pub fn obs_phrase<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
+    let obs_phrase_part_two = choice((word(), just('.').map(|v| vec![v]), cfws()))
         .repeated()
         .collect::<Vec<_>>();
-    word().then(obs_phrase_part_two).map(|(v, two)| {
-        let mut s = v;
-        for v in two {
-            s.push_str(&v);
-        }
-        s
+    word().then(obs_phrase_part_two).map(|(mut v, two)| {
+        v.extend(two.into_iter().flatten());
+        v
     })
 }
-pub fn pharse<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    choice((
-        word()
-            .repeated()
-            .at_least(1)
-            .collect::<Vec<_>>()
-            .map(|v| v.into_iter().collect::<Vec<_>>().join("")),
-        obs_phrase(),
-    ))
+pub fn pharse<'a>() -> impl Parser<'a, &'a str, Vec<char>, ErrType<'a>> {
+    choice((word(), obs_phrase()))
 }
 
 pub fn dot_atom<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
@@ -249,12 +251,21 @@ pub fn dot_atom<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
         .then_ignore(cfws().or_not())
 }
 pub fn local_part<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    quoted_string()
-        .map(|v| format!(r#""{}""#, v))
-        .or(dot_atom())
+    choice((
+        quoted_string().map(|v| {
+            let mut s = String::with_capacity(v.len() + 2);
+            s.push('"');
+            for c in v {
+                s.push(c);
+            }
+            s.push('"');
+            s
+        }),
+        dot_atom(),
+    ))
 }
 pub fn domain<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    domain_literal().or(dot_atom())
+    choice((domain_literal(), dot_atom()))
 }
 pub fn dtext<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
     choice((
@@ -263,8 +274,11 @@ pub fn dtext<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
         one_of('\x5E'..='\x7E'),
     ))
 }
-pub fn dcontent<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    quoted_pair().or(dtext().map(|v| v.to_string()))
+pub fn dcontent<'a>() -> impl Parser<'a, &'a str, Either<char, [char; 2]>, ErrType<'a>> {
+    choice((
+        dtext().map(|v| Either::Left(v)),
+        quoted_pair().map(|v| Either::Right(v)),
+    ))
 }
 pub fn domain_literal<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
     let domain_inner = fws()
@@ -272,7 +286,21 @@ pub fn domain_literal<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
         .ignore_then(dcontent())
         .repeated()
         .collect::<Vec<_>>()
-        .map(|v| v.into_iter().collect::<String>());
+        .map(|v| {
+            let mut s = String::with_capacity(v.len() + 2);
+            s.push('[');
+            for c in v {
+                match c {
+                    Either::Left(c) => s.push(c),
+                    Either::Right([escape, c]) => {
+                        s.push(escape);
+                        s.push(c);
+                    }
+                }
+            }
+            s.push(']');
+            s
+        });
     crlf()
         .or_not()
         .then(just('['))
@@ -280,9 +308,6 @@ pub fn domain_literal<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
         .then_ignore(fws().or_not())
         .then_ignore(just(']'))
         .then_ignore(crlf().or_not())
-        .map(|v| {
-            return format!("[{}]", v);
-        })
 }
 pub fn addr_spec<'a>() -> impl Parser<'a, &'a str, (String, String), ErrType<'a>> {
     local_part().then_ignore(just('@')).then(domain())
@@ -291,7 +316,7 @@ pub fn angle_addr<'a>() -> impl Parser<'a, &'a str, (String, String), ErrType<'a
     just('<').ignore_then(addr_spec()).then_ignore(just('>'))
 }
 pub fn display_name<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    pharse()
+    pharse().map(|v| v.into_iter().collect())
 }
 pub fn name_addr<'a>() -> impl Parser<'a, &'a str, RawMailBox, ErrType<'a>> {
     display_name()
@@ -321,8 +346,23 @@ mod tests {
 
     use crate::parsers::rfcs::rfc2822::{domain, domain_literal, quoted_string};
 
-    use super::{display_name, fws_counted};
+    use super::{display_name, fws_counted, mailbox};
     use pretty_assertions::assert_eq;
+    #[test]
+    pub fn test_mailbox() {
+        let v = mailbox()
+            .parse("\"Simple Test\" <test@mail.local>")
+            .into_result();
+        assert_eq!(
+            v,
+            Ok(super::RawMailBox {
+                display_name: Some("Simple Test".to_string()),
+                local: "test".to_string(),
+                domain: "mail.local".to_string()
+            })
+        );
+    }
+
     #[test]
     pub fn test_fws() {
         assert_eq!(fws_counted().parse("  ").into_result(), Ok(2))
@@ -342,7 +382,10 @@ mod tests {
     #[test]
     pub fn test_quoted_string() {
         assert_eq!(
-            quoted_string().parse(r#""Darth Vader""#).into_result(),
+            quoted_string()
+                .parse(r#""Darth Vader""#)
+                .into_result()
+                .map(|v| v.into_iter().collect::<String>()),
             Ok("Darth Vader".to_string())
         );
     }
