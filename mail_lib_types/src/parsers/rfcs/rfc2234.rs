@@ -39,8 +39,8 @@ pub fn lf<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
 /// ```ebnf
 /// CRLF =  CR LF ; Internet standard newline
 /// ```
-pub fn crlf<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
-    just("\r\n").map(|v| v.to_string())
+pub fn crlf<'a>() -> impl Parser<'a, &'a str, (char, char), ErrType<'a>> {
+    just('\r').then(just('\n'))
 }
 
 /// [CTL Defined in RFC 2234](https://datatracker.ietf.org/doc/html/rfc2234#section-6.1)
@@ -99,9 +99,10 @@ pub fn wsp<'a>() -> impl Parser<'a, &'a str, char, ErrType<'a>> {
 pub fn lwsp<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
     wsp().then(crlf()).repeated().collect::<Vec<_>>().map(|v| {
         let mut s = String::new();
-        for (wsp, crlf) in v {
+        for (wsp, (cl, lf)) in v {
             s.push(wsp);
-            s.push_str(crlf.as_str())
+            s.push(cl);
+            s.push(lf);
         }
         s
     })
@@ -109,7 +110,6 @@ pub fn lwsp<'a>() -> impl Parser<'a, &'a str, String, ErrType<'a>> {
 #[cfg(test)]
 mod tests {
     use chumsky::Parser;
-
     use pretty_assertions::assert_eq;
     #[test]
     pub fn wsp() {

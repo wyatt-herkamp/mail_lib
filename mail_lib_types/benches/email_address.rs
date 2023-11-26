@@ -1,6 +1,5 @@
-use chumsky::Parser;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use mail_lib_types::{parsers::rfcs::rfc2822, EmailAddress};
+use mail_lib_types::EmailAddress;
 #[path = "../tests/data/data_types.rs"]
 pub mod data_types;
 
@@ -8,7 +7,7 @@ fn email(email: &str) {
     let _ = EmailAddress::new(email).unwrap();
 }
 fn email_from_chumsky(email: &str) {
-    let _ = rfc2822::addr_spec().parse(email).unwrap();
+    let _ = EmailAddress::new_validate_over_chumsky(email).unwrap();
 }
 /// Chumsky will be slower. The regular EmailAddress is just validating the email address while Chumsky is parsing the entire email.
 fn bench_validate_emails(c: &mut Criterion) {
@@ -27,5 +26,9 @@ fn bench_benchmark_chumsky(c: &mut Criterion) {
     }
 }
 
-criterion_group!(bench_email_address, bench_validate_emails, bench_benchmark_chumsky);
+criterion_group!(
+    bench_email_address,
+    bench_validate_emails,
+    bench_benchmark_chumsky
+);
 criterion_main!(bench_email_address);

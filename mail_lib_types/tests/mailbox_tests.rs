@@ -1,7 +1,4 @@
-use mail_lib_types::{
-    email_address::{EmailErrorMessage, EmailPart},
-    mail_box::MailBox,
-};
+use mail_lib_types::mail_box::MailBox;
 use pretty_assertions::assert_eq;
 
 #[path = "./data/data_types.rs"]

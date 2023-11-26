@@ -10,6 +10,7 @@ use std::{
     str::FromStr,
 };
 
+use chumsky::Parser;
 use digestible::Digestible;
 use strum::Display;
 pub use validation::{
@@ -30,6 +31,8 @@ pub enum EmailPart {
     Domain,
 }
 pub use mail_lib_macros::from_static_email;
+
+use crate::parsers::rfcs::rfc5322;
 /// Representation of an Email Address
 ///
 /// Fields are private to prevent invalid email addresses from being created.
@@ -101,11 +104,30 @@ impl EmailAddress {
         tracing::trace!("Email Address: {:?} at {:?}", local, domain);
         validate_local_part(local)?;
         validate_domain(domain)?;
-        let at_index = email_address.len() - domain.len() - 1;
+        let at_index = local.len();
         Ok(EmailAddress {
             email_address,
             at_index,
         })
+    }
+    /// This only exists for Benchmarking and Testing.
+    ///
+    /// The pure Rust Implementation is faster at validating email addresses.
+    #[doc(hidden)]
+    pub fn new_validate_over_chumsky(
+        email_address: impl AsRef<str>,
+    ) -> Result<Self, InvalidEmailAddress> {
+        let result = rfc5322::addr_spec()
+            .parse(email_address.as_ref())
+            .into_result();
+        if let Ok((local, _)) = result {
+            Ok(EmailAddress {
+                email_address: email_address.as_ref().to_owned(),
+                at_index: local.len(),
+            })
+        } else {
+            Err(InvalidEmailAddress::from("Unknown Error"))
+        }
     }
     /// Creates a new Email Address.
     ///
@@ -140,12 +162,9 @@ impl EmailAddress {
         domain: impl AsRef<str>,
     ) -> Self {
         let local = local.as_ref();
-        let domain = domain.as_ref();
-        let email_address = format!("{}@{}", local, domain);
-        let at_index = email_address.len() - domain.len() - 1;
         EmailAddress {
-            email_address,
-            at_index,
+            email_address: combine_parts(local, domain.as_ref()),
+            at_index: local.len(),
         }
     }
     /// Gets a reference to the Email Address parts
@@ -179,17 +198,22 @@ impl Into<(String, String)> for EmailAddress {
         self.parts_owned()
     }
 }
+fn combine_parts(local: &str, domain: &str) -> String {
+    let mut email_address = String::with_capacity(local.len() + domain.len() + 1);
+    email_address.push_str(local);
+    email_address.push('@');
+    email_address.push_str(domain);
+    email_address
+}
 impl<L: AsRef<str>, D: AsRef<str>> TryFrom<(L, D)> for EmailAddress {
     type Error = InvalidEmailAddress;
 
     fn try_from((local, domain): (L, D)) -> Result<Self, Self::Error> {
         validate_local_part(local.as_ref())?;
         validate_domain(local.as_ref())?;
-        let email_address = format!("{}@{}", local.as_ref(), domain.as_ref());
-        let at_index = email_address.len() - domain.as_ref().len() - 1;
         Ok(EmailAddress {
-            email_address,
-            at_index,
+            email_address: combine_parts(local.as_ref(), domain.as_ref()),
+            at_index: local.as_ref().len(),
         })
     }
 }

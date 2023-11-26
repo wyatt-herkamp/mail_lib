@@ -1,12 +1,12 @@
 use chumsky::Parser;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use mail_lib_types::parsers::rfcs::rfc2822;
+use mail_lib_types::parsers::rfcs::rfc5322;
 
 #[path = "../tests/data/data_types.rs"]
 pub mod data_types;
 
 fn mail_box(email: &str) {
-    let _ = rfc2822::mailbox().parse(email).unwrap();
+    let _ = rfc5322::mailbox().parse(email).unwrap();
 }
 fn lettre_mailbox_bench(c: &mut Criterion) {
     c.bench_function("Bench Lettre Bench", |b| {
