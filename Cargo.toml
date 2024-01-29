@@ -23,7 +23,7 @@ impl-tools = "0.10"
 anyhow = "1"
 bytes = "1"
 async-trait = "0.1"
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26", features = ["derive"] }
 base64 = { version = "0.21" }
 rkyv = { version = "0.7", features = ["validation"] }
 auto_impl = "1"
