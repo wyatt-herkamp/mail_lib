@@ -1,4 +1,3 @@
-use auto_impl::auto_impl;
 
 pub mod command_impls;
 pub trait SMTPCommand: Sized {

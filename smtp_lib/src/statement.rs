@@ -1,4 +1,4 @@
-use std::{fmt::Write, str::FromStr};
+use std::str::FromStr;
 
 use auto_impl::auto_impl;
 use bytes::Bytes;

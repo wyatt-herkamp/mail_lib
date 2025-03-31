@@ -1,7 +1,6 @@
 use std::{
     fmt::{Debug, Display},
     str::FromStr,
-    usize,
 };
 
 use auto_impl::auto_impl;
@@ -47,7 +46,7 @@ impl Display for SMTPServerExtension {
         match self {
             SMTPServerExtension::Size(size) => write!(f, "SIZE {}", size),
             SMTPServerExtension::StartTLS => write!(f, "STARTTLS"),
-            /// SMTPServerExtension::Auth(value) => {
+            // SMTPServerExtension::Auth(value) => {
             //    write!(f, "AUTH {}", LoginMechanism::format_iter(value.iter()))
             //}
             SMTPServerExtension::Other { name, value } => {
